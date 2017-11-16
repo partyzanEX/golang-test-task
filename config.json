@@ -1,0 +1,7 @@
+{
+  "host": "",
+  "port": "3030",
+  "log": true,
+  "max_procs": 0,
+  "compress": false
+}
