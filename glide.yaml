@@ -1,0 +1,7 @@
+package: github.com/partyzanex/golang-test-task
+import:
+- package: github.com/valyala/fasthttp
+  version: ^20160617.0.0
+- package: golang.org/x/net
+  subpackages:
+  - html

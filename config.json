@@ -2,6 +2,7 @@
   "host": "",
   "port": "3030",
   "log": true,
+  "max_workers": 0,
   "max_procs": 0,
   "compress": false
 }

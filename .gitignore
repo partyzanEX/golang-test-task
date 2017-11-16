@@ -1,1 +1,4 @@
 .idea
+*.log
+glide.lock
+vendor/*

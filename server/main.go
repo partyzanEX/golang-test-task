@@ -7,19 +7,15 @@ import (
 )
 
 var (
-	logger, errLog  = log.NewLogger("./task.log", false)
 	config, errConf = conf.NewConfig("./config.json")
+	logger, errLog  = log.NewLogger("./task.log", !config.Get("log").Bool())
 )
 
 func main() {
 	handleError(errLog)
 	handleError(errConf)
 
-	s := &parser.Http{
-		Host:     config.Get("host").String(),
-		Port:     config.Get("port").String(),
-		Compress: config.Get("compress").Bool(),
-	}
+	s := parser.NewHttp(config, logger)
 
 	if err := s.Serve(); err != nil {
 		logger.WriteError(err)
