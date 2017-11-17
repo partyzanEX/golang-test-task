@@ -5,7 +5,7 @@
 
 ```bash
 git clone https://github.com/partyzanex/golang-test-task
-cd ./gotask
+cd ./golang-test-task
 // если есть glide
 glide install 
 // или
