@@ -70,13 +70,13 @@ func (h *Http) HandleRequest(ctx *fasthttp.RequestCtx) {
 func (h *Http) CreateWorkers(urls models.Urls) {
 	h.Pool.Workers = make([]pool.Worker, len(urls))
 	for _, url := range urls {
-		h.AddWorker(h.CreateWorker(url))
+		h.Pool.AddWorker(h.CreateWorker(url))
 	}
 }
 
 // creating function-worker
 func (h *Http) CreateWorker(url string) pool.Worker {
-	return func(jobs chan interface{}, results chan interface{}) {
+	return func(results chan interface{}, next func()) {
 		urlInfo := models.UrlInfo{
 			Url: url,
 		}
@@ -85,8 +85,8 @@ func (h *Http) CreateWorker(url string) pool.Worker {
 		if err != nil {
 			urlInfo.SetError(err)
 
-			<-jobs
 			results <- urlInfo
+			next()
 			return
 		}
 
@@ -102,8 +102,8 @@ func (h *Http) CreateWorker(url string) pool.Worker {
 		}
 		urlInfo.SetElements(response.Body())
 
-		<-jobs
 		results <- urlInfo
+		next()
 	}
 }
 

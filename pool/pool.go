@@ -1,7 +1,7 @@
 package pool
 
 // interface of worker function
-type Worker func(jobs chan interface{}, results chan interface{})
+type Worker func(results chan interface{}, next func())
 
 // Workers pool
 type Pool struct {
@@ -30,8 +30,12 @@ func (p *Pool) Run() {
 
 	for _, worker := range p.Workers {
 		p.jobs <- 1
-		go worker(p.jobs, p.results)
+		go worker(p.results, p.nextJob)
 	}
+}
+
+func (p *Pool) nextJob() {
+	<-p.jobs
 }
 
 // load results from channels
