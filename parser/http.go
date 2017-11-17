@@ -68,7 +68,7 @@ func (h *Http) HandleRequest(ctx *fasthttp.RequestCtx) {
 
 // adding workers in Pool
 func (h *Http) CreateWorkers(urls models.Urls) {
-	h.Pool.Workers = make([]pool.Worker, len(urls))
+	h.Pool.Workers = []pool.Worker{}
 	for _, url := range urls {
 		h.Pool.AddWorker(h.CreateWorker(url))
 	}
