@@ -16,6 +16,7 @@ func main() {
 	handleError(errConf)
 
 	s := parser.NewHttp(config, logger)
+	s.MaxRedirects = config.Get("max_redirects").Int()
 
 	if err := s.Serve(); err != nil {
 		logger.WriteError(err)

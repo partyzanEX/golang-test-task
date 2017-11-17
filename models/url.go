@@ -2,8 +2,8 @@ package models
 
 import (
 	"encoding/json"
-	"io"
 	"golang.org/x/net/html"
+	"bytes"
 )
 
 // url list
@@ -42,12 +42,19 @@ type UrlInfo struct {
 	Meta     Meta      `json:"meta"`
 	Elements []Element `json:"elements"`
 	counter  map[string]uint
+
+	// todo: handle errors
+	error    error
+}
+
+func (ui *UrlInfo) SetError(err error)  {
+	ui.error = err
 }
 
 type Meta struct {
 	Status        int    `json:"status"`
 	ContentType   string `json:"content-type"`
-	ContentLength int64  `json:"content-length"`
+	ContentLength int  `json:"content-length"`
 }
 
 type Element struct {
@@ -56,8 +63,8 @@ type Element struct {
 }
 
 // parsing amd counting of elements
-func (ui *UrlInfo) SetElements(body io.Reader) {
-	tok := html.NewTokenizer(body)
+func (ui *UrlInfo) SetElements(body []byte) {
+	tok := html.NewTokenizer(bytes.NewReader(body))
 	ui.counter = make(map[string]uint)
 
 	for {

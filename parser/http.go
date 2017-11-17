@@ -1,29 +1,34 @@
 package parser
 
 import (
+	"fmt"
+	"encoding/json"
+	"mime"
+
 	"github.com/valyala/fasthttp"
+
 	"github.com/partyzanex/golang-test-task/pool"
 	"github.com/partyzanex/golang-test-task/log"
-	"fmt"
-	"net/http"
-	//"encoding/json"
-	//"reflect"
 	"github.com/partyzanex/golang-test-task/conf"
 	"github.com/partyzanex/golang-test-task/models"
 )
 
+// Handler
 type Http struct {
 	*pool.Pool
 	*log.Logger
-	Host     string
-	Port     string
-	Compress bool
+	*fasthttp.Client
+	Host         string
+	Port         string
+	Compress     bool
+	MaxRedirects int
 }
 
 func (h Http) GetAddr() string {
 	return h.Host + ":" + h.Port
 }
 
+// run http-server
 func (h Http) Serve() error {
 	handler := h.HandleRequest
 	if h.Compress {
@@ -34,6 +39,7 @@ func (h Http) Serve() error {
 	return fasthttp.ListenAndServe(h.GetAddr(), handler)
 }
 
+// request hendler
 func (h *Http) HandleRequest(ctx *fasthttp.RequestCtx) {
 	var resp []byte
 	statusCode := fasthttp.StatusOK
@@ -47,13 +53,12 @@ func (h *Http) HandleRequest(ctx *fasthttp.RequestCtx) {
 		h.CreateWorkers(urls)
 		h.Run()
 		result := h.GetResult()
-		fmt.Println(result)
-		//
-		//resp, err = json.Marshal(result)
-		//if err != nil {
-		//	statusCode = fasthttp.StatusInternalServerError
-		//	h.Logger.WriteError(err)
-		//}
+
+		resp, err = json.Marshal(result)
+		if err != nil {
+			statusCode = fasthttp.StatusInternalServerError
+			h.Logger.WriteError(err)
+		}
 	}
 
 	ctx.Response.Header.Set("content-type", "application/json; charset=utf-8")
@@ -61,43 +66,68 @@ func (h *Http) HandleRequest(ctx *fasthttp.RequestCtx) {
 	fmt.Fprint(ctx, string(resp))
 }
 
+// adding workers in Pool
 func (h *Http) CreateWorkers(urls models.Urls) {
-	h.Pool.Workers = []pool.Worker{}
+	h.Pool.Workers = make([]pool.Worker, len(urls))
 	for _, url := range urls {
 		h.AddWorker(h.CreateWorker(url))
 	}
 }
 
+// creating function-worker
 func (h *Http) CreateWorker(url string) pool.Worker {
-	return func(
-		jobs <-chan interface{},
-		results chan<- interface{},
-		errors chan<- interface{},
-	) {
+	return func(jobs chan interface{}, results chan interface{}) {
 		urlInfo := models.UrlInfo{
 			Url: url,
 		}
 
-		response, err := http.Get(url)
+		response, err := h.DoRequest(url)
 		if err != nil {
-			errors <- err
+			urlInfo.SetError(err)
+
+			<-jobs
 			results <- urlInfo
+			return
+		}
+
+		mimeType, _, err := mime.ParseMediaType(string(response.Header.ContentType()))
+		if err != nil {
+			urlInfo.SetError(err)
 		}
 
 		urlInfo.Meta = models.Meta{
-			Status:        response.StatusCode,
-			ContentType:   response.Header.Get("content-type"),
-			ContentLength: response.ContentLength,
+			Status:        response.StatusCode(),
+			ContentType:   mimeType,
+			ContentLength: response.Header.ContentLength(),
 		}
-		urlInfo.SetElements(response.Body)
+		urlInfo.SetElements(response.Body())
+
+		<-jobs
 		results <- urlInfo
 	}
 }
 
+// open url and return response
+func (h Http) DoRequest(url string) (*fasthttp.Response, error) {
+	response := fasthttp.AcquireResponse()
+
+	request := fasthttp.AcquireRequest()
+	request.SetRequestURI(url)
+
+	err := h.Client.Do(request, response)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+// constructor
 func NewHttp(config *conf.Config, logger *log.Logger) *Http {
 	return &Http{
 		Pool:     pool.NewPool(config.Get("max_workers").Int()),
 		Logger:   logger,
+		Client:   &fasthttp.Client{},
 		Host:     config.Get("host").String(),
 		Port:     config.Get("port").String(),
 		Compress: config.Get("compress").Bool(),

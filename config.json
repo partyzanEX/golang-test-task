@@ -2,7 +2,8 @@
   "host": "",
   "port": "3030",
   "log": true,
-  "max_workers": 0,
+  "max_workers": 100,
   "max_procs": 0,
-  "compress": false
+  "compress": false,
+  "max_redirects": 10
 }
