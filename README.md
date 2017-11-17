@@ -1,6 +1,25 @@
 # golang-test-task
 Тестовая задача для Golang разработчика
 
+# Решение
+
+```bash
+git clone https://github.com/partyzanex/golang-test-task
+cd ./gotask
+// если есть glide
+glide install 
+// или
+go get golang.org/x/net/html
+go get github.com/valyala/fasthttp
+// сборка и запуск в докере
+make build && make run
+```
+
+### Тестовый запрос
+
+```bash
+curl -X POST -d "[\"https://yandex.ru\", \"https://gooooooogle.com\"]" http://localhost:3030/
+```
 
 ## Задача
 
