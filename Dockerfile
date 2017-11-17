@@ -15,4 +15,6 @@ WORKDIR /root/
 COPY --from=0 /go/src/github.com/partyzanex/golang-test-task/gotask ./gotask
 COPY --from=0 /go/src/github.com/partyzanex/golang-test-task/config.json ./config.json
 
+CMD ["./gotask"]
+
 EXPOSE 3030
