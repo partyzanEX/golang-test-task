@@ -35,9 +35,9 @@ func (l *Logger) Create() error {
 	if !l.Disabled {
 		var flag int
 		if _, err := os.Stat(l.FileName); os.IsNotExist(err) {
-			flag = os.O_RDWR | os.O_CREATE
+			flag = os.O_RDWR|os.O_CREATE
 		} else {
-			flag = os.O_APPEND | os.O_WRONLY
+			flag = os.O_APPEND|os.O_WRONLY
 		}
 
 		f, err := os.OpenFile(l.FileName, flag, 0755)
@@ -88,9 +88,9 @@ func (l *Logger) Close() {
 // constructor
 func NewLogger(fileName string, disabled bool) (*Logger, error) {
 	logger := &Logger{
-		FileName:   fileName,
+		FileName: fileName,
 		DateFormat: time.RFC3339,
-		Disabled:   disabled,
+		Disabled: disabled,
 	}
 	err := logger.Create()
 	return logger, err
